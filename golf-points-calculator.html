@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Golf Points" />
+<title>Golf Points Calculator</title>
+<style>
+  :root {
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --surface-1: #F0EFE9;
+    --border: #E1DFD6;
+    --border-strong: #C7C4B6;
+    --text-primary: #1F1E1B;
+    --text-secondary: #63615A;
+    --text-muted: #918F85;
+    --success: #0F6E56;
+    --danger: #A32D2D;
+    --accent: #185FA5;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+  }
+  .wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: calc(env(safe-area-inset-top, 0px) + 24px) 20px calc(env(safe-area-inset-bottom, 0px) + 40px);
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0 0 24px;
+  }
+  .section-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .section-label span.title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .segmented {
+    display: flex;
+    gap: 6px;
+  }
+  .segmented button {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-primary);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    -webkit-appearance: none;
+  }
+  .segmented button.active {
+    background: var(--surface-1);
+    border-color: var(--border-strong);
+  }
+  .rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  input[type="text"], input[type="number"] {
+    -webkit-appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 16px;
+    color: var(--text-primary);
+  }
+  input[type="text"] { flex: 1; }
+  input[type="number"] { width: 92px; text-align: right; }
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(24,95,165,0.12);
+  }
+  .pts-label { font-size: 13px; color: var(--text-muted); white-space: nowrap; width: 28px; }
+  .dpp-box {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface-1);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin: 4px 0 24px;
+  }
+  .dpp-box label { font-size: 14px; color: var(--text-secondary); flex: 1; }
+  .dpp-box .dollar { font-size: 14px; color: var(--text-muted); }
+  .dpp-box input { width: 90px; }
+  .results-block {
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+    margin-bottom: 20px;
+  }
+  .player-net {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .player-net:last-child { border-bottom: none; }
+  .player-net .name { font-weight: 600; font-size: 15px; }
+  .player-net .pts { font-size: 13px; color: var(--text-muted); margin-left: 8px; }
+  .player-net .amt { font-size: 16px; font-weight: 600; }
+  .settle-title { font-size: 13px; color: var(--text-secondary); margin: 0 0 8px; }
+  .tx {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+  }
+  .tx .name { font-size: 15px; font-weight: 600; }
+  .tx .arrow { color: var(--text-muted); font-size: 16px; }
+  .tx .amt { margin-left: auto; font-size: 15px; font-weight: 600; }
+  .empty { font-size: 13px; color: var(--text-muted); padding: 8px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Golf points calculator</h1>
+  <p class="subtitle">Points-based settlement, split evenly across every pairing.</p>
+
+  <div class="section-label">
+    <span class="title">Players</span>
+    <div class="segmented">
+      <button id="p2">2</button>
+      <button id="p3">3</button>
+      <button id="p4">4</button>
+    </div>
+  </div>
+
+  <div class="rows" id="rows"></div>
+
+  <div class="dpp-box">
+    <label for="dpp">$ per point</label>
+    <span class="dollar">$</span>
+    <input id="dpp" type="number" min="0" step="0.5" value="1" inputmode="decimal" />
+  </div>
+
+  <div class="results-block" id="netResults"></div>
+  <div id="settleResults"></div>
+</div>
+
+<script>
+(function(){
+  var n = 4;
+  var players = [
+    {name:'Player 1', points:13},
+    {name:'Player 2', points:11},
+    {name:'Player 3', points:9},
+    {name:'Player 4', points:3}
+  ];
+
+  var rowsEl = document.getElementById('rows');
+  var dppEl = document.getElementById('dpp');
+  var netResultsEl = document.getElementById('netResults');
+  var settleResultsEl = document.getElementById('settleResults');
+
+  function setN(newN){
+    n = newN;
+    ['p2','p3','p4'].forEach(function(id){
+      var btn = document.getElementById(id);
+      btn.classList.toggle('active', id === 'p' + n);
+    });
+    renderRows();
+    compute();
+  }
+
+  function renderRows(){
+    rowsEl.innerHTML = '';
+    for (var i = 0; i < n; i++){
+      var pl = players[i];
+      var row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML =
+        '<input type="text" data-idx="' + i + '" data-field="name" value="' + pl.name.replace(/"/g,'&quot;') + '" />' +
+        '<input type="number" data-idx="' + i + '" data-field="points" value="' + pl.points + '" min="0" step="1" inputmode="numeric" />' +
+        '<span class="pts-label">pts</span>';
+      rowsEl.appendChild(row);
+    }
+    rowsEl.querySelectorAll('input').forEach(function(inp){
+      inp.addEventListener('input', function(){
+        var idx = parseInt(inp.getAttribute('data-idx'), 10);
+        var field = inp.getAttribute('data-field');
+        if (field === 'points') {
+          players[idx].points = inp.value === '' ? 0 : parseFloat(inp.value);
+        } else {
+          players[idx].name = inp.value || ('Player ' + (idx + 1));
+        }
+        compute();
+      });
+    });
+  }
+
+  function fmtMoney(v){
+    var sign = v < 0 ? '-' : '';
+    return sign + '$' + Math.abs(v).toFixed(2);
+  }
+
+  function compute(){
+    var dpp = parseFloat(dppEl.value);
+    if (isNaN(dpp) || dpp < 0) dpp = 0;
+
+    var active = players.slice(0, n);
+    var totalPoints = active.reduce(function(s,p){ return s + (isNaN(p.points) ? 0 : p.points); }, 0);
+    var avg = totalPoints / n;
+
+    var nets = active.map(function(p, i){
+      var pts = isNaN(p.points) ? 0 : p.points;
+      var net = (pts - avg) * n * dpp;
+      return { name: p.name || ('Player ' + (i + 1)), points: pts, net: Math.round(net * 100) / 100 };
+    });
+
+    var creditors = nets.filter(function(x){ return x.net > 0.004; }).map(function(x){ return {name:x.name, amt:x.net}; });
+    var debtors = nets.filter(function(x){ return x.net < -0.004; }).map(function(x){ return {name:x.name, amt:-x.net}; });
+    creditors.sort(function(a,b){ return b.amt - a.amt; });
+    debtors.sort(function(a,b){ return b.amt - a.amt; });
+
+    var transactions = [];
+    var ci = 0, di = 0;
+    while (ci < creditors.length && di < debtors.length){
+      var c = creditors[ci], d = debtors[di];
+      var amt = Math.min(c.amt, d.amt);
+      if (amt > 0.004){
+        transactions.push({ from: d.name, to: c.name, amt: Math.round(amt * 100) / 100 });
+      }
+      c.amt -= amt; d.amt -= amt;
+      if (c.amt <= 0.004) ci++;
+      if (d.amt <= 0.004) di++;
+    }
+
+    var netHtml = '';
+    nets.slice().sort(function(a,b){ return b.points - a.points; }).forEach(function(x){
+      var color = x.net > 0.004 ? 'var(--success)' : (x.net < -0.004 ? 'var(--danger)' : 'var(--text-secondary)');
+      netHtml += '<div class="player-net">' +
+        '<div><span class="name">' + x.name + '</span><span class="pts">' + x.points + ' pts</span></div>' +
+        '<span class="amt" style="color:' + color + ';">' + fmtMoney(x.net) + '</span>' +
+        '</div>';
+    });
+    netResultsEl.innerHTML = netHtml;
+
+    var settleHtml = '';
+    if (transactions.length === 0){
+      settleHtml = '<p class="empty">Everyone breaks even.</p>';
+    } else {
+      settleHtml += '<p class="settle-title">Settle up</p>';
+      transactions.forEach(function(t){
+        settleHtml += '<div class="tx">' +
+          '<span class="name">' + t.from + '</span>' +
+          '<span class="arrow">&rarr;</span>' +
+          '<span class="name">' + t.to + '</span>' +
+          '<span class="amt">' + fmtMoney(t.amt) + '</span>' +
+          '</div>';
+      });
+    }
+    settleResultsEl.innerHTML = settleHtml;
+  }
+
+  document.getElementById('p2').addEventListener('click', function(){ setN(2); });
+  document.getElementById('p3').addEventListener('click', function(){ setN(3); });
+  document.getElementById('p4').addEventListener('click', function(){ setN(4); });
+  dppEl.addEventListener('input', compute);
+
+  setN(4);
+})();
+</script>
+</body>
+</html>
